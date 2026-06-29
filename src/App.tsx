@@ -1,18 +1,37 @@
-import type { CSSProperties } from 'react'
 import { useMemo, useState } from 'react'
 import {
-  Bell,
-  CheckCircle2,
-  Clock3,
-  CreditCard,
-  Download,
-  FilePlus2,
-  FileText,
-  Search,
-  Send,
-  Users,
-  WalletCards,
-} from 'lucide-react'
+  BellOutlined,
+  ClockCircleOutlined,
+  CreditCardOutlined,
+  DownloadOutlined,
+  FileAddOutlined,
+  FileTextOutlined,
+  SendOutlined,
+  TeamOutlined,
+  WalletOutlined,
+} from '@ant-design/icons'
+import {
+  Badge,
+  Button,
+  Card,
+  Col,
+  ConfigProvider,
+  Flex,
+  Input,
+  Layout,
+  List,
+  Progress,
+  Row,
+  Segmented,
+  Space,
+  Statistic,
+  Steps,
+  Table,
+  Tag,
+  theme,
+  Typography,
+} from 'antd'
+import type { TableColumnsType } from 'antd'
 import './App.css'
 
 type InvoiceStatus = 'Draft' | 'Sent' | 'Overdue' | 'Paid'
@@ -85,17 +104,11 @@ const currency = new Intl.NumberFormat('en-US', {
   style: 'currency',
 })
 
-const theme = {
-  '--accent': '#246bfe',
-  '--accent-2': '#18a37a',
-  '--accent-3': '#f3a21b',
-} as CSSProperties
-
-function getStatusClass(status: InvoiceStatus) {
-  if (status === 'Paid') return 'good'
-  if (status === 'Overdue') return 'bad'
-  if (status === 'Sent') return 'info'
-  return 'warn'
+function getTagColor(status: InvoiceStatus) {
+  if (status === 'Paid') return 'green'
+  if (status === 'Overdue') return 'red'
+  if (status === 'Sent') return 'blue'
+  return 'gold'
 }
 
 function App() {
@@ -133,211 +146,203 @@ function App() {
     return { open, overdue, paid, count: invoices.length }
   }, [])
 
+  const columns: TableColumnsType<Invoice> = [
+    {
+      title: 'Invoice',
+      dataIndex: 'id',
+      render: (_, invoice) => (
+        <Space direction="vertical" size={0}>
+          <Typography.Text strong>{invoice.id}</Typography.Text>
+          <Typography.Text type="secondary">{invoice.project}</Typography.Text>
+        </Space>
+      ),
+    },
+    { title: 'Client', dataIndex: 'client' },
+    { title: 'Owner', dataIndex: 'owner' },
+    { title: 'Due', dataIndex: 'due' },
+    {
+      title: 'Amount',
+      dataIndex: 'amount',
+      render: (value: number) => currency.format(value),
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      render: (value: InvoiceStatus) => <Tag color={getTagColor(value)}>{value}</Tag>,
+    },
+  ]
+
   return (
-    <main className="app" style={theme}>
-      <div className="app-shell">
-        <header className="topbar">
-          <div className="brand">
-            <span className="brand-mark">
-              <FileText size={22} aria-hidden="true" />
-            </span>
-            <div>
-              <h1>BillFrame</h1>
-              <p>Billing workspace for client teams</p>
-            </div>
-          </div>
-          <div className="toolbar">
-            <button className="icon-button" type="button" aria-label="Open notifications">
-              <Bell size={18} aria-hidden="true" />
-            </button>
-            <button className="ghost-button" type="button">
-              <Download size={17} aria-hidden="true" />
-              Export
-            </button>
-            <button className="action-button" type="button">
-              <FilePlus2 size={17} aria-hidden="true" />
-              New invoice
-            </button>
-          </div>
-        </header>
-
-        <section className="hero-grid">
-          <div className="hero-copy">
-            <p className="eyebrow">Revenue control room</p>
-            <h2>Invoices, approvals, reminders, and payment state in one place.</h2>
-            <p>
-              BillFrame tracks every invoice from draft to paid with client context,
-              reminder timing, audit notes, and a clean review path for finance teams.
-            </p>
-          </div>
-          <aside className="command-stack" aria-label="Invoice actions">
-            <button className="action-button" type="button">
-              <Send size={17} aria-hidden="true" />
-              Send selected invoice
-            </button>
-            <button className="ghost-button" type="button">
-              <Clock3 size={17} aria-hidden="true" />
-              Schedule reminder
-            </button>
-            <button className="ghost-button" type="button">
-              <CreditCard size={17} aria-hidden="true" />
-              Copy payment link
-            </button>
-          </aside>
-        </section>
-
-        <section className="stats-grid" aria-label="Billing summary">
-          <article className="metric">
-            <span className="metric-icon">
-              <WalletCards size={19} aria-hidden="true" />
-            </span>
-            <h3>{currency.format(totals.open)}</h3>
-            <p>Open receivables</p>
-          </article>
-          <article className="metric">
-            <span className="metric-icon">
-              <CheckCircle2 size={19} aria-hidden="true" />
-            </span>
-            <h3>{currency.format(totals.paid)}</h3>
-            <p>Paid this cycle</p>
-          </article>
-          <article className="metric">
-            <span className="metric-icon">
-              <Clock3 size={19} aria-hidden="true" />
-            </span>
-            <h3>{currency.format(totals.overdue)}</h3>
-            <p>Overdue balance</p>
-          </article>
-          <article className="metric">
-            <span className="metric-icon">
-              <Users size={19} aria-hidden="true" />
-            </span>
-            <h3>{totals.count}</h3>
-            <p>Client invoices</p>
-          </article>
-        </section>
-
-        <section className="workspace-grid">
-          <div className="panel">
-            <div className="panel-title">
+    <ConfigProvider
+      theme={{
+        algorithm: theme.defaultAlgorithm,
+        token: {
+          borderRadius: 10,
+          colorPrimary: '#1677ff',
+          fontFamily:
+            'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        },
+      }}
+    >
+      <Layout className="billframe-app">
+        <Layout.Header className="bf-header">
+          <Flex align="center" justify="space-between" gap={16} wrap>
+            <Space size={12}>
+              <Badge count={3} offset={[-2, 4]}>
+                <div className="bf-logo">
+                  <FileTextOutlined />
+                </div>
+              </Badge>
               <div>
-                <h2>Invoice pipeline</h2>
-                <p>Filter, search, and inspect the full billing queue.</p>
+                <Typography.Title level={3}>BillFrame</Typography.Title>
+                <Typography.Text type="secondary">Billing workspace for client teams</Typography.Text>
               </div>
-            </div>
-            <div className="search-row">
-              <label className="search-box">
-                <Search size={17} aria-hidden="true" />
-                <input
+            </Space>
+            <Space wrap>
+              <Button icon={<BellOutlined />}>Alerts</Button>
+              <Button icon={<DownloadOutlined />}>Export</Button>
+              <Button type="primary" icon={<FileAddOutlined />}>
+                New invoice
+              </Button>
+            </Space>
+          </Flex>
+        </Layout.Header>
+
+        <Layout.Content className="bf-content">
+          <Row gutter={[18, 18]}>
+            <Col xs={24} lg={16}>
+              <Card className="bf-hero">
+                <Typography.Text type="secondary">Revenue control room</Typography.Text>
+                <Typography.Title level={1}>
+                  Invoices, reminders, approvals, and payment state.
+                </Typography.Title>
+                <Typography.Paragraph>
+                  Ant Design drives the interface: enterprise table behavior, native stats,
+                  tags, progress, steps, and card spacing.
+                </Typography.Paragraph>
+              </Card>
+            </Col>
+            <Col xs={24} lg={8}>
+              <Card title="Payment packet" className="bf-command-card">
+                <Space direction="vertical" size="middle">
+                  <Button block type="primary" icon={<SendOutlined />}>
+                    Send selected invoice
+                  </Button>
+                  <Button block icon={<ClockCircleOutlined />}>
+                    Schedule reminder
+                  </Button>
+                  <Button block icon={<CreditCardOutlined />}>
+                    Copy payment link
+                  </Button>
+                </Space>
+              </Card>
+            </Col>
+          </Row>
+
+          <Row gutter={[18, 18]} className="bf-stats">
+            <Col xs={24} md={12} xl={6}>
+              <Card>
+                <Statistic
+                  title="Open receivables"
+                  value={totals.open}
+                  prefix={<WalletOutlined />}
+                  formatter={(value) => currency.format(Number(value))}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} md={12} xl={6}>
+              <Card>
+                <Statistic
+                  title="Paid this cycle"
+                  value={totals.paid}
+                  prefix={<CreditCardOutlined />}
+                  formatter={(value) => currency.format(Number(value))}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} md={12} xl={6}>
+              <Card>
+                <Statistic
+                  title="Overdue balance"
+                  value={totals.overdue}
+                  prefix={<ClockCircleOutlined />}
+                  formatter={(value) => currency.format(Number(value))}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} md={12} xl={6}>
+              <Card>
+                <Statistic title="Client invoices" value={totals.count} prefix={<TeamOutlined />} />
+              </Card>
+            </Col>
+          </Row>
+
+          <Row gutter={[18, 18]}>
+            <Col xs={24} xl={16}>
+              <Card
+                title="Invoice pipeline"
+                extra={
+                  <Segmented
+                    value={filter}
+                    options={[...filters]}
+                    onChange={(value) => setFilter(value as Filter)}
+                  />
+                }
+              >
+                <Input.Search
+                  allowClear
+                  placeholder="Search invoices"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search invoices"
+                  className="bf-search"
                 />
-              </label>
-            </div>
-            <div className="filter-row" aria-label="Invoice filters">
-              {filters.map((item) => (
-                <button
-                  className={`filter-pill ${filter === item ? 'active' : ''}`}
-                  key={item}
-                  onClick={() => setFilter(item)}
-                  type="button"
-                >
-                  {item}
-                </button>
-              ))}
-            </div>
-            <div className="data-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Invoice</th>
-                    <th>Client</th>
-                    <th>Owner</th>
-                    <th>Due</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {visibleInvoices.map((invoice) => (
-                    <tr key={invoice.id}>
-                      <td>
-                        <button
-                          className="row-button"
-                          type="button"
-                          onClick={() => setSelectedId(invoice.id)}
-                        >
-                          <span className="strong">{invoice.id}</span>
-                          <br />
-                          <span className="muted">{invoice.project}</span>
-                        </button>
-                      </td>
-                      <td>{invoice.client}</td>
-                      <td>{invoice.owner}</td>
-                      <td>{invoice.due}</td>
-                      <td>{currency.format(invoice.amount)}</td>
-                      <td>
-                        <span className={`status ${getStatusClass(invoice.status)}`}>
-                          {invoice.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <aside className="panel">
-            <div className="panel-title">
-              <div>
-                <h2>{selected.client}</h2>
-                <p>{selected.id} payment packet</p>
-              </div>
-              <span className={`status ${getStatusClass(selected.status)}`}>
-                {selected.status}
-              </span>
-            </div>
-            <div className="detail-stack">
-              <div className="mini-grid">
-                <div className="mini-stat">
-                  <p>Amount</p>
-                  <strong>{currency.format(selected.amount)}</strong>
-                </div>
-                <div className="mini-stat">
-                  <p>Due</p>
-                  <strong>{selected.due}</strong>
-                </div>
-              </div>
-              <div className="detail-row">
-                <span className="muted">Project</span>
-                <span className="strong">{selected.project}</span>
-              </div>
-              <div className="detail-row">
-                <span className="muted">Last touch</span>
-                <span>{selected.lastTouch}</span>
-              </div>
-              <div className="detail-row">
-                <span className="muted">Line items</span>
-                {selected.lineItems.map((item) => (
-                  <span className="split-row" key={item}>
-                    <span>{item}</span>
-                    <CheckCircle2 size={16} aria-hidden="true" />
-                  </span>
-                ))}
-              </div>
-              <div className="detail-row">
-                <span className="muted">Payment readiness</span>
-                <div className="progress" aria-label="Payment readiness 76 percent">
-                  <span style={{ width: '76%' }} />
-                </div>
-              </div>
-            </div>
-          </aside>
-        </section>
-      </div>
-    </main>
+                <Table
+                  columns={columns}
+                  dataSource={visibleInvoices}
+                  pagination={false}
+                  rowKey="id"
+                  scroll={{ x: 760 }}
+                  onRow={(invoice) => ({
+                    onClick: () => setSelectedId(invoice.id),
+                  })}
+                />
+              </Card>
+            </Col>
+            <Col xs={24} xl={8}>
+              <Card
+                title={selected.client}
+                extra={<Tag color={getTagColor(selected.status)}>{selected.status}</Tag>}
+              >
+                <Space direction="vertical" size="large" className="bf-detail">
+                  <Statistic
+                    title={`${selected.id} amount`}
+                    value={selected.amount}
+                    formatter={(value) => currency.format(Number(value))}
+                  />
+                  <Progress percent={76} status="active" />
+                  <Steps
+                    direction="vertical"
+                    size="small"
+                    current={selected.status === 'Paid' ? 3 : selected.status === 'Sent' ? 2 : 1}
+                    items={[
+                      { title: 'Drafted', description: selected.project },
+                      { title: 'Reviewed', description: selected.owner },
+                      { title: 'Sent', description: selected.lastTouch },
+                      { title: 'Paid', description: selected.due },
+                    ]}
+                  />
+                  <List
+                    header="Line items"
+                    dataSource={selected.lineItems}
+                    renderItem={(item) => <List.Item>{item}</List.Item>}
+                  />
+                </Space>
+              </Card>
+            </Col>
+          </Row>
+        </Layout.Content>
+      </Layout>
+    </ConfigProvider>
   )
 }
 
